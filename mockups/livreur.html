@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GreenRoute Livreur</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  body { background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+  
+  .container { max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 30px; }
+  
+  /* Mockup téléphone */
+  .phone-frame { background: white; border-radius: 36px; box-shadow: 0 8px 40px rgba(0,0,0,0.12); overflow: hidden; border: 8px solid #1a1a2e; position: relative; }
+  .phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 24px; background: #1a1a2e; border-radius: 0 0 16px 16px; z-index: 10; }
+  .phone-status { background: #1a1a2e; color: white; padding: 12px 20px 6px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  
+  /* Header app */
+  .app-header { background: linear-gradient(135deg, #2E7D32, #1B5E20); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .app-header h2 { color: white; font-size: 16px; font-weight: 600; }
+  .app-header .dispo-btn { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 14px; color: white; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .app-header .dispo-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; }
+  
+  .app-content { padding: 16px; min-height: 560px; }
+  
+  /* Carte de notification */
+  .notification-card { background: #F0FDF4; border: 2px solid #BBF7D0; border-radius: 16px; padding: 20px; position: relative; animation: pulse-border 2s infinite; }
+  @keyframes pulse-border { 0%, 100% { border-color: #BBF7D0; } 50% { border-color: #4ADE80; } }
+  .notification-badge { background: #DC2626; color: white; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; display: inline-block; margin-bottom: 10px; }
+  .notification-title { font-size: 16px; font-weight: 600; color: #1F2937; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .notification-detail { margin-top: 12px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #E5E7EB; font-size: 13px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row .label { color: #6B7280; }
+  .detail-row .value { font-weight: 500; color: #1F2937; }
+  
+  .countdown { background: #FEF3C7; border-radius: 10px; padding: 10px; text-align: center; margin: 14px 0; }
+  .countdown .time { font-size: 28px; font-weight: 700; color: #DC2626; letter-spacing: 2px; }
+  .countdown .label { font-size: 11px; color: #92400E; }
+  
+  .action-buttons { display: flex; gap: 10px; }
+  .btn-accept { flex: 1; padding: 14px; background: #2E7D32; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .btn-decline { flex: 1; padding: 14px; background: white; color: #DC2626; border: 1.5px solid #FECACA; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  
+  /* Info livreur */
+  .driver-info { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 12px; background: #F9FAFB; border-radius: 12px; }
+  .driver-avatar { width: 40px; height: 40px; border-radius: 50%; background: #2E7D32; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+  .driver-text .name { font-size: 13px; font-weight: 600; color: #1F2937; }
+  .driver-text .status { font-size: 12px; color: #6B7280; display: flex; align-items: center; gap: 4px; }
+  .driver-text .status .dot { width: 6px; height: 6px; border-radius: 50%; background: #4ADE80; display: inline-block; }
+  
+  /* Scénario QR Scan */
+  .qr-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #E5E7EB; }
+  .qr-section h4 { font-size: 14px; color: #374151; margin-bottom: 12px; }
+  .qr-placeholder { width: 180px; height: 180px; background: white; border: 3px dashed #D1D5DB; border-radius: 16px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .qr-placeholder .qr-icon { font-size: 64px; opacity: 0.3; }
+  .qr-placeholder .qr-label { font-size: 12px; color: #9CA3AF; margin-top: 4px; }
+  .scan-overlay { position: absolute; width: 64px; height: 4px; background: #2E7D32; border-radius: 2px; animation: scan 2s infinite; opacity: 0.5; }
+  @keyframes scan { 0% { transform: translateY(-60px); } 100% { transform: translateY(60px); } }
+  
+  /* Scénario d'exception : QR illisible */
+  .manual-code-section { margin-top: 16px; padding: 16px; background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; }
+  .manual-code-section h5 { font-size: 13px; color: #92400E; margin-bottom: 8px; }
+  .code-input-group { display: flex; gap: 8px; }
+  .code-input-group input { flex: 1; padding: 12px; border: 1.5px solid #D1D5DB; border-radius: 8px; font-size: 18px; text-align: center; letter-spacing: 4px; font-weight: 700; text-transform: uppercase; background: white; }
+  .code-input-group input:focus { outline: none; border-color: #F59E0B; }
+  .code-input-group button { padding: 12px 20px; background: #F59E0B; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+  /* Labels */
+  .label-scenario { display: inline-block; background: #DCFCE7; color: #166534; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .label-scenario.error { background: #FEE2E2; color: #991B1B; }
+  
+  .legend { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 20px; }
+  .legend-title { font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748B; padding: 3px 0; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  .legend-dot.nominal { background: #22C55E; }
+  .legend-dot.error { background: #F59E0B; }
+  .legend-dot.guidage { background: #3B82F6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Scénario Nominal -->
+  <div class="label-scenario">✓ SCÉNARIO NOMINAL — Notification de colis et scan QR Code</div>
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-status"><span>09:41</span><span>🔋 📶</span></div>
+    <div class="app-header">
+      <h2>🚲 GreenRoute</h2>
+      <div class="dispo-btn"><span class="dot"></span> Disponible</div>
+    </div>
+    <div class="app-content">
+      <!-- Notification nouvelle mission -->
+      <div class="notification-card">
+        <div class="notification-badge">🆕 NOUVELLE MISSION</div>
+        <div class="notification-title">📦 Colis à récupérer</div>
+        <div class="notification-detail">
+          <div class="detail-row"><span class="label">Type de colis</span><span class="value">Carton standard</span></div>
+          <div class="detail-row"><span class="label">Volume</span><span class="value">35 × 25 × 15 cm</span></div>
+          <div class="detail-row"><span class="label">Poids</span><span class="value">4,2 kg</span></div>
+          <div class="detail-row"><span class="label">Distance</span><span class="value">1,8 km de votre position</span></div>
+          <div class="detail-row"><span class="label">Collecte</span><span class="value">12 Rue du Faubourg Bonnefoy</span></div>
+          <div class="detail-row"><span class="label">Destination</span><span class="value">48 Rue de la Colombette</span></div>
+          <div class="detail-row"><span class="label">Urgence</span><span class="value">Standard (24h)</span></div>
+        </div>
+
+        <div class="countdown">
+          <div class="time">00:47</div>
+          <div class="label">Temps restant pour accepter</div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-accept">✅ Accepter</button>
+          <button class="btn-decline">✕ Refuser</button>
+        </div>
+      </div>
+
+      <!-- Livreur connecté -->
+      <div class="driver-info">
+        <div class="driver-avatar">ML</div>
+        <div class="driver-text">
+          <div class="name">Marie Lambert</div>
+          <div class="status"><span class="dot"></span> En ligne • 12 livraisons aujourd'hui</div>
+        </div>
+      </div>
+
+      <!-- QR Code Scan Section -->
+      <div class="qr-section">
+        <h4>📸 Scanner le QR Code du colis</h4>
+        <div style="position:relative; width:180px; height:180px; margin:0 auto;">
+          <div class="qr-placeholder">
+            <div class="qr-icon">◼</div>
+            <div class="qr-label">Scan QR Code</div>
+          </div>
+          <div class="scan-overlay"></div>
+        </div>
+        <p style="text-align:center; font-size:12px; color:#6B7280; margin-top:8px;">Scannez le code sur le colis pour valider la livraison</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scénario d'exception : QR Code illisible -->
+  <div class="label-scenario error">✗ SCÉNARIO D'EXCEPTION — QR Code endommagé, saisie manuelle</div>
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-status"><span>09:41</span><span>🔋 📶</span></div>
+    <div class="app-header">
+      <h2>🚲 GreenRoute</h2>
+      <div class="dispo-btn" style="background:rgba(255,255,255,0.2);"><span class="dot" style="background:#FBBF24;"></span> En Tournée</div>
+    </div>
+    <div class="app-content">
+      <div style="padding: 12px; background: #F0FDF4; border-radius: 12px; margin-bottom: 16px; text-align:center;">
+        <div style="font-weight:600; color:#166534;">📦 Livraison en cours</div>
+        <div style="font-size:12px; color:#4B5563; margin-top:4px;">Colis #GR-7F3D-A2B9</div>
+      </div>
+
+      <!-- Tentative de scan échouée -->
+      <div style="padding: 16px; background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 12px; text-align:center; margin-bottom:16px;">
+        <div style="font-size:32px; margin-bottom:8px;">📵</div>
+        <div style="font-weight:600; color:#991B1B; font-size:14px;">QR Code illisible</div>
+        <div style="font-size:12px; color:#7F1D1D; margin-top:4px;">Le QR Code sur le colis est endommagé.</div>
+      </div>
+
+      <!-- Procédure de secours : saisie manuelle -->
+      <div class="manual-code-section">
+        <h5>⌨️ Procédure de secours — Saisie manuelle</h5>
+        <p style="font-size:12px; color:#6B7280; margin-bottom:10px;">Saisissez le code à 12 caractères situé sous le QR Code :</p>
+        <div class="code-input-group">
+          <input type="text" value="GR-7F3D-A2B9" placeholder="XX-XXXX-XXXX" maxlength="12">
+          <button>✅ OK</button>
+        </div>
+        <p style="font-size:11px; color:#92400E; margin-top:8px;">💡 Le code se trouve sous le graphique du QR Code.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Légende des critères Bastien & Scapin -->
+  <div class="legend">
+    <div class="legend-title">Critères Bastien &amp; Scapin appliqués :</div>
+    <div class="legend-item"><span class="legend-dot guidage"></span> Guidage (messages clairs, compteur visuel, code couleur)</div>
+    <div class="legend-item"><span class="legend-dot nominal"></span> Contrôle utilisateur (Accepter/Refuser, garde-fou 60s)</div>
+    <div class="legend-item"><span class="legend-dot error"></span> Gestion des erreurs (procédure de secours QR → manuel)</div>
+    <div class="legend-item"><span class="legend-dot nominal"></span> Flexibilité (scan auto ou saisie manuelle)</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+skinparam participant {
+    BorderColor #2E6E9E
+    FontColor #1A3A5C
+    BackgroundColor #E8F4FD
+}
+skinparam sequence {
+    ArrowColor #555555
+    BorderColor #888888
+}
+skinparam note {
+    BorderColor #888888
+    BackgroundColor #FFF9E6
+}
+
+title "DSS n°2 - Prise en charge et livraison d'un colis par le Livreur"
+header "Cas d'utilisation : Accepter/Refuser une mission et livrer le colis"
+
+actor "Livreur" as Courier
+participant "Application Mobile\nGreenRoute" as Mobile
+participant "Système Central\nGreenRoute" as System
+participant "ToulouseMap\nAPI" as TMap
+
+== Déclaration de disponibilité ==
+Courier -> Mobile : 1. Se connecter
+Mobile -> System : 2. Authentification
+System --> Mobile : 3. Session ouverte
+Courier -> Mobile : 4. Activer commutateur "Disponible"
+Mobile -> System : 5. Déclarer état = DISPONIBLE\n(position GPS initiale)
+System --> Mobile : 6. Confirmation disponibilité
+
+loop Toutes les 30 secondes
+    Mobile -> System : 7. Transmettre position GPS\n(latitude, longitude)
+    
+    opt Colis dans rayon < 3 km
+        System -> System : 8. Analyser file d'attente\n(commandes A_ATTRIBUER)
+        
+        alt Colis trouvé à proximité
+            System --> Mobile : 9a. Notification contextuelle\n(type colis, volume, distance)
+            Mobile --> Courier : 9b. Afficher proposition
+            
+            == Compte à rebours 60 secondes ==
+            alt Livreur accepte
+                Courier -> Mobile : 10a. Accepter la mission
+                Mobile -> System : 11a. Confirmation acceptation
+                System -> System : 12a. Statut = EN_COURS_D_ATTRIBUTION
+                System -> TMap : 13a. Demander feuille de route optimisée\n(pistes cyclables)
+                TMap --> System : 14a. Retourner itinéraire
+                System --> Mobile : 15a. Afficher feuille de route\n(itinéraire + instructions)
+                Mobile --> Courier : 16a. Guidage vers point de collecte
+                
+                == Validation de la collecte ==
+                Courier -> Mobile : 17a. Valider collecte du colis
+                Mobile -> System : 18a. Signal collecte effectuée
+                System -> System : 19a. Statut = EN_COURS_DE_LIVRAISON\nLivreur > En Tournée
+                System --> Mobile : 20a. Afficher itinéraire vers destination
+                
+                == Livraison au destinataire ==
+                alt QR Code lisible
+                    Courier -> Mobile : 21a. Scanner QR Code sur le colis
+                    Mobile -> System : 22a. Envoyer scan QR
+                    System -> System : 23a. Valider QR Code
+                    System --> Mobile : 24a. Livraison confirmée
+                    System -> System : 25a. Statut = LIVRE\nLivreur > Disponible
+                    Mobile --> Courier : 26a. Afficher récapitulatif trajet
+                else QR Code endommagé / illisible
+                    Courier -> Mobile : 21b. Saisir code manuel 12 caractères
+                    Mobile -> System : 22b. Envoyer code alphanumérique
+                    System -> System : 23b. Valider code
+                    System --> Mobile : 24b. Livraison confirmée\n(procédure de secours)
+                    System -> System : 25b. Statut = LIVRE\nLivreur > Disponible
+                end
+                
+            else Livreur refuse ou timeout 60s
+                Courier -> Mobile : 10c. Refuser / timeout
+                Mobile -> System : 11c. Refus / expiration
+                System -> System : 12c. Remettre colis en file d'attente
+                System --> System : 13c. Proposer à un autre livreur
+            end
+        else
+            System --> Mobile : 9b. Aucune mission disponible
+        end
+    end
+end
+
+@enduml

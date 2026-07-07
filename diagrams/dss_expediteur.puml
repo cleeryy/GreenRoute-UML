@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+skinparam participant {
+    BorderColor #2E6E9E
+    FontColor #1A3A5C
+    BackgroundColor #E8F4FD
+}
+skinparam sequence {
+    ArrowColor #555555
+    BorderColor #888888
+}
+skinparam note {
+    BorderColor #888888
+    BackgroundColor #FFF9E6
+}
+
+title "DSS n°1 - Demande de prise en charge par l'Expéditeur"
+header "Cas d'utilisation : Saisir une demande de prise en charge et payer"
+
+actor "Expéditeur" as Client
+participant "Système\nGreenRoute" as System
+participant "ToulouseMap\nAPI" as TMap
+participant "ToulousePay\nAPI" as TPay
+
+== Authentification ==
+Client -> System : 1. Saisir identifiants (email, mot de passe)
+System --> Client : 2. Afficher tableau de bord
+
+loop
+    == Saisie des informations de livraison ==
+    Client -> System : 3. Saisir adresse de collecte
+    Client -> System : 4. Saisir adresse de destination
+    Client -> System : 5. Saisir caractéristiques colis\n(poids, dimensions)
+    Client -> System : 6. Choisir niveau d'urgence (Standard/Express)
+
+    == Calcul du devis ==
+    System -> TMap : 7. Demander évaluation distance\n(adresse départ, arrivée)
+    TMap --> System : 8. Retourner distance réelle (km)
+    
+    System -> System : 9. Calculer coût financier\n(règle de tarification)
+    System -> System : 10. Calculer empreinte carbone\n(comparaison diesel)
+    System --> Client : 11. Afficher devis complet\n(coût + CO₂ économisé)
+
+    alt Client valide le devis
+        == Paiement ==
+        Client -> System : 12. Valider le devis et initier paiement
+        System -> TPay : 13. Transmettre ordre de paiement\n(montant, informations bancaires)
+        
+        alt Paiement accepté par la banque
+            TPay --> System : 14a. Transaction approuvée
+            System -> System : 15a. Générer QR Code de traçabilité\n(identifiant unique + QR)
+            System -> System : 16a. Enregistrer commande\n(statut = A_ATTRIBUER)
+            System --> Client : 17a. Afficher ticket d'expédition\n(à imprimer pour le colis)
+        else Paiement refusé / fonds insuffisants
+            TPay --> System : 14b. Transaction refusée
+            System -> System : 15b. Bloquer la commande\n(statut = VERROUILLEE_FRAUDE)
+            System --> Client : 16b. Afficher message d'erreur\n"Modifiez votre moyen de paiement"
+        end
+        
+        break si paiement accepté
+    else Client refuse le devis
+        Client -> System : 12'. Annuler la demande
+        System --> Client : 13'. Retour au tableau de bord
+    end
+end
+
+@enduml

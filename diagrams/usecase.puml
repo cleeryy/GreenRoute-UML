@@ -1,0 +1,70 @@
+@startuml
+!theme plain
+left to right direction
+
+skinparam actor {
+    BorderColor #2E6E9E
+    FontColor #1A3A5C
+}
+skinparam usecase {
+    BorderColor #2E6E9E
+    BackgroundColor #E8F4FD
+    FontColor #1A3A5C
+    BorderThickness 1
+}
+skinparam rectangle {
+    BorderColor #C0392B
+    BorderThickness 3
+    FontColor #C0392B
+}
+
+rectangle "Plateforme GreenRoute" as System {
+    usecase "UC01\nS'authentifier" as UC01
+    usecase "UC02\nConsulter le tableau de bord" as UC02
+    usecase "UC03\nSaisir une demande\nde prise en charge" as UC03
+    usecase "UC04\nConsulter le devis\n(coût + CO2)" as UC04
+    usecase "UC05\nValider le devis\net payer" as UC05
+    usecase "UC06\nGénérer le ticket\nd'expédition QR Code" as UC06
+    usecase "UC07\nDéclarer sa\ndisponibilité" as UC07
+    usecase "UC08\nRecevoir une proposition\nde colis" as UC08
+    usecase "UC09\nAccepter/Refuser\nune mission" as UC09
+    usecase "UC10\nConsulter la feuille\nde route optimisée" as UC10
+    usecase "UC11\nValider la collecte\ndu colis" as UC11
+    usecase "UC12\nScanner le QR Code\nde livraison" as UC12
+    usecase "UC13\nSaisir manuellement\nle code de livraison" as UC13
+    usecase "UC14\nPayer la prestation" as UC14
+
+    ' Relations Include
+    UC03 ..> UC01 : <<include>>\n<size:9>(doit être authentifié)</size>
+    UC05 ..> UC04 : <<include>>\n<size:9>(consulte le devis avant)</size>
+    UC09 ..> UC08 : <<include>>\n<size:9>(reçoit proposition)</size>
+    UC12 ..> UC11 : <<include>>\n<size:9>(après collecte)</size>
+
+    ' Relations Extend
+    UC13 ..> UC12 : <<extend>>\n<size:9>(si QR illisible)</size>
+    UC06 ..> UC05 : <<extend>>\n<size:9>(si paiement OK)</size>
+}
+
+actor "Expéditeur (Client)" as Client
+actor "Livreur" as Courier
+actor "ToulouseMap" as TMap
+actor "ToulousePay" as TPay
+
+Client --> UC01
+Client --> UC02
+Client --> UC03
+Client --> UC05
+Client --> UC14
+
+Courier --> UC01
+Courier --> UC07
+Courier --> UC09
+Courier --> UC11
+Courier --> UC13
+
+TMap --> UC04 : "calcule distance"
+TMap --> UC10 : "fournit itinéraire"
+
+TPay --> UC14 : "valide transaction"
+
+@enduml

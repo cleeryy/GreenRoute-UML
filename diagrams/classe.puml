@@ -1,0 +1,188 @@
+@startuml
+!theme plain
+skinparam class {
+    BorderColor #2E6E9E
+    BackgroundColor #F0F8FF
+    FontColor #1A3A5C
+    BorderThickness 1
+}
+skinparam enum {
+    BorderColor #8E44AD
+    BackgroundColor #F5EEF8
+    FontColor #6C3483
+}
+
+' ============= ENUMERATIONS =============
+
+enum OrderStatus {
+    A_ATTRIBUER
+    EN_COURS_D_ATTRIBUTION
+    EN_COURS_DE_LIVRAISON
+    LIVRE
+    VERROUILLEE_FRAUDE
+}
+
+enum UrgencyLevel {
+    STANDARD
+    EXPRESS
+}
+
+enum DeliveryPersonState {
+    DISPONIBLE
+    EN_TOURNEE
+}
+
+' ============= CLASSES =============
+
+class Client {
+    - _client_id: UUID
+    - _nom: str
+    - _email: str
+    - _telephone: str
+    - _adresse: str
+    - _date_inscription: datetime
+    --
+    + __init__(nom, email, telephone, adresse)
+    + {property} client_id: UUID
+    + {property} nom: str
+    + {property} email: str
+    + {property} telephone: str
+    + {property} adresse: str
+    + {property} date_inscription: datetime
+    + {property} commandes: list[Order]
+    + placer_commande(package, adresse_collecte, adresse_livraison, urgence): Order
+    + get_commande_by_id(id): Order | None
+}
+
+class Order {
+    - _order_id: UUID
+    - _client: Client
+    - _package: Package
+    - _pickup_address: str
+    - _delivery_address: str
+    - _urgency: UrgencyLevel
+    - _status: OrderStatus
+    - _delivery_person: DeliveryPerson
+    - _qr_code: str
+    - _total_cost: float
+    - _carbon_savings: float
+    - _created_at: datetime
+    - _paid_at: datetime
+    - _delivered_at: datetime
+    --
+    + __init__(client, package, pickup, delivery, urgency)
+    + {property} order_id: UUID
+    + {property} client: Client
+    + {property} package: Package
+    + {property} pickup_address: str
+    + {property} delivery_address: str
+    + {property} urgency: UrgencyLevel
+    + {property} status: OrderStatus
+    + {property} delivery_person: DeliveryPerson
+    + {property} qr_code: str
+    + {property} total_cost: float
+    + {property} carbon_savings: float
+    + {property} created_at: datetime
+    + {property} paid_at: datetime
+    + {property} delivered_at: datetime
+    + assigner_a(delivery_person): void
+    + confirmer_collecte(): void
+    + confirmer_livraison(qr_code): bool
+    + marquer_fraude(): void
+    + mettre_a_jour_cout(cout): void
+    - _generer_qr_code(): str
+}
+
+class Package {
+    - _poids: float
+    - _longueur: float
+    - _largeur: float
+    - _hauteur: float
+    --
+    + __init__(poids, longueur, largeur, hauteur)
+    + {property} poids: float
+    + {property} longueur: float
+    + {property} largeur: float
+    + {property} hauteur: float
+    + {property} volume: float
+    + verifier_dimensions(): bool
+}
+
+class DeliveryPerson {
+    - _delivery_person_id: UUID
+    - _nom: str
+    - _email: str
+    - _telephone: str
+    - _mode_transport: str
+    - _etat: DeliveryPersonState
+    - _latitude: float
+    - _longitude: float
+    --
+    + __init__(nom, email, telephone, mode_transport)
+    + {property} delivery_person_id: UUID
+    + {property} nom: str
+    + {property} email: str
+    + {property} telephone: str
+    + {property} mode_transport: str
+    + {property} etat: DeliveryPersonState
+    + {property} latitude: float
+    + {property} longitude: float
+    + {setter} latitude: float
+    + {setter} longitude: float
+    + {property} commandes: list[Order]
+    + set_disponible(): void
+    + set_en_tournee(): void
+    + mettre_a_jour_position(lat, lon): void
+    + accepter_commande(order): void
+    + est_a_proximite(lat, lon, rayon_km): bool
+}
+
+class PricingService {
+    + {static} calculer_cout(package, distance_km, urgence): dict
+    + {static} calculer_economie_co2(distance_km): float
+    - {static} _calculer_tarif_base(poids): float
+}
+
+class AssignmentEngine {
+    - _commandes_attente: list[Order]
+    - _livreurs_disponibles: list[DeliveryPerson]
+    --
+    + __init__()
+    + enregistrer_commande(order): void
+    + enregistrer_livreur(delivery_person): void
+    + trouver_livreur_proche(order, rayon_max_km): DeliveryPerson | None
+    + attribuer_commande(order): Order | None
+}
+
+class RoutingService {
+    + calculer_distance(adresse_depart, adresse_arrivee): float
+    + calculer_itineraire(adresse_depart, adresse_arrivee): list
+}
+
+class PaymentService {
+    + traiter_paiement(client, montant): bool
+}
+
+' ============= RELATIONS =============
+
+Client "1" -- "0..*" Order : passe
+Order "1" *-- "1" Package : contient
+Order "0..*" -- "0..1" DeliveryPerson : assignée à
+
+DeliveryPerson "1" --> "1" DeliveryPersonState : a un état
+Order "1" --> "1" OrderStatus : a un statut
+Order "1" --> "1" UrgencyLevel : a un niveau
+
+PricingService ..> Order : calcule le coût
+AssignmentEngine ..> Order : gère l'attribution
+AssignmentEngine ..> DeliveryPerson : gère les livreurs
+RoutingService ..> Order : calcule l'itinéraire
+PaymentService ..> Order : traite le paiement
+
+' Note sur les services
+note top of PricingService : << service >>
+note top of AssignmentEngine : << service >>
+note top of RoutingService : << service >>
+note top of PaymentService : << service >>
+
+@enduml

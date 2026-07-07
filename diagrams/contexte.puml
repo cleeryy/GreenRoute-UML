@@ -1,0 +1,64 @@
+@startuml
+!theme plain
+skinparam rectangle {
+    BorderColor #2E6E9E
+    BackgroundColor #E8F4FD
+    FontColor #1A3A5C
+    BorderThickness 2
+}
+skinparam actor {
+    BorderColor #2E6E9E
+    FontColor #1A3A5C
+}
+skinparam system {
+    BorderColor #C0392B
+    BackgroundColor #FADBD8
+    BorderThickness 3
+}
+skinparam database {
+    BorderColor #27AE60
+    BackgroundColor #D5F5E3
+}
+skinparam arrow {
+    FontSize 11
+    FontColor #555555
+}
+
+rectangle "<size:16><b>GreenRoute</b></size>\n<size:11>Plateforme de livraison\ndu dernier kilomètre</size>" as System #FADBD8
+
+actor ":Expéditeur" as Client
+actor ":Livreur" as Courier
+
+rectangle "ToulouseMap\n<size:9>API Cartographique</size>" as ToulouseMap #D5F5E3
+rectangle "ToulousePay\n<size:9>Passerelle de Paiement</size>" as ToulousePay #D5F5E3
+rectangle "Banque\n<size:9>Système Bancaire</size>" as Bank #D5F5E3
+
+' Flows entre Client et GreenRoute
+Client --> System : "S'authentifier (login/mot de passe)"
+Client --> System : "Saisir demande de prise en charge\n(colis, adresses, urgence)"
+System --> Client : "Afficher devis (coût + CO₂ économisé)"
+Client --> System : "Valider le devis et payer"
+System --> Client : "Générer ticket d'expédition (QR Code)"
+
+' Flows entre Livreur et GreenRoute
+Courier --> System : "S'authentifier"
+Courier --> System : "Déclarer disponibilité\n(commutateur Disponible/En Tournée)"
+Courier --> System : "Transmettre position GPS\n(toutes les 30 secondes)"
+System --> Courier : "Notifier colis disponible\n(rayon < 3 km)"
+Courier --> System : "Accepter/Refuser mission"
+Courier --> System : "Valider collecte colis"
+Courier --> System : "Scanner QR Code de livraison"
+System --> Courier : "Afficher feuille de route optimisée"
+
+' Flows avec systèmes externes
+System --> ToulouseMap : "Calculer distance et faisabilité du trajet"
+System --> ToulouseMap : "Générer feuille de route\n(pistes cyclables)"
+ToulouseMap --> System : "Coordonnées vectorielles\ndistance, temps de trajet"
+
+System --> ToulousePay : "Transmettre ordre de paiement\n(montant, informations CB)" 
+ToulousePay --> System : "Accepter / Rejeter transaction"
+
+System --> Bank : "Vérification fonds / validation"
+Bank --> System : "Confirmation / Refus"
+
+@enduml
