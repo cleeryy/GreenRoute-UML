@@ -12,4 +12,11 @@ jobs:
         run: |
           curl -s -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            --data '{}'
+            -H "X-GitHub-Event: push" \
+            -d '{
+              "ref": "refs/heads/main",
+              "repository": {
+                "full_name": "cleeryy/GreenRoute-UML",
+                "clone_url": "https://github.com/cleeryy/GreenRoute-UML.git"
+              }
+            }'
