@@ -38,6 +38,7 @@ Ce dépôt contient l'intégralité du dossier d'analyse fonctionnelle et de l'i
 | **Bloc 2** — Architecture & dynamique | Diagramme de classes, diagrammes de séquence système (DSS) | ✅ |
 | **Bloc 3** — UI/UX | Maquettes HTML (nominal + exception), critères Bastien & Scapin | ✅ |
 | **Bloc 4** — Implémentation | Code Python OOP, encapsulation stricte, 13 fichiers | ✅ |
+| **Soutenance** | Présentation orale, slides, notes par intervenant | ✅ |
 
 ## Exécution du code
 
